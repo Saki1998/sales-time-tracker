@@ -118,11 +118,12 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
           </div>
           <div class="send-actions">
             <button id="sendTodayBtn" class="btn btn-green">今日の集計をコピーしてFormsを開く</button>
+            <button id="confirmSentBtn" class="btn btn-primary">Forms送信完了にする</button>
             <button id="exportTodayCsvBtn" class="btn btn-outline">今日のCSV（予備）</button>
             <button id="exportAllCsvBtn" class="btn btn-outline">全記録CSV</button>
             <button id="undoSentBtn" class="btn btn-outline">今日を未送信に戻す</button>
           </div>
-          <div class="notice">終業時に緑のボタンを押してください。担当者名・対象日・合計時間・業務項目別の分数がコピーされ、Microsoft Formsが開きます。Formsの「1日の業務データ」欄へ貼り付けて送信してください。</div>
+          <div class="notice">終業時に緑のボタンを押してください。担当者名・対象日・全体時間・客先対応時間・間接業務時間・業務項目別の分数がコピーされ、Microsoft Formsが開きます。Formsへ入力・貼り付けして送信した後、この画面へ戻り「Forms送信完了にする」を押してください。</div>
           <div id="formsLinkArea" class="send-actions"></div>
         </div>
         <div class="card send-log"><h3 style="margin:0 0 12px">送信履歴</h3><div id="sendLogArea"></div></div>
@@ -265,9 +266,14 @@ async function sendToday(){
  const text=makeDailySummary(arr);
  try{await navigator.clipboard.writeText(text)}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
  window.open(settings.formsUrl,'_blank','noopener');
+ alert('今日の集計をコピーしました。Formsへ入力して送信した後、この画面へ戻り「Forms送信完了にする」を押してください。');
+}
+function confirmTodaySent(){
+ const arr=records.filter(r=>r.date===todayKey&&!r.sent);if(!arr.length){toast('今日の未送信記録はありません。');return}
+ if(!confirm(`Formsへの送信が完了しましたか？
+${arr.length}件、合計${shortMinutes(sum(arr))}を送信済みにします。`))return;
  const ids=new Set(arr.map(r=>r.id));records=records.map(r=>ids.has(r.id)?{...r,sent:true,sentAt:Date.now()}:r);
- sendLog.unshift({date:todayKey,time:pad(new Date().getHours())+':'+pad(new Date().getMinutes()),count:arr.length,minutes:Math.round(msToMinutes(sum(arr))),owner:owner()});saveLog();saveRecords();
- alert('今日の集計をコピーしました。開いたFormsの「1日の業務データ」欄を長押しして「ペースト」し、送信してください。');
+ sendLog.unshift({date:todayKey,time:pad(new Date().getHours())+':'+pad(new Date().getMinutes()),count:arr.length,minutes:Math.round(msToMinutes(sum(arr))),owner:owner()});saveLog();saveRecords();toast('送信済みにしました。');
 }
 function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$('sendUnsentCount').textContent=`${arr.length}件`;$('sendUnsentMinutes').textContent=`合計${shortMinutes(sum(arr))}`;$('sendStatusBadge').textContent=arr.length?'未送信あり':'送信済み';$('sendStatusBadge').className=`badge ${arr.length?'badge-unsent':'badge-sent'}`;$('sendTodayBtn').disabled=!arr.length;$('sendLogArea').innerHTML=sendLog.length?sendLog.slice(0,20).map(x=>`<div class="log-row"><span>${esc(x.date)} ${esc(x.time)}<br><small>${esc(x.owner)}</small></span><strong>${x.count}件 / ${x.minutes}分</strong></div>`).join(''):'<div class="empty">送信履歴はありません。</div>';$('formsLinkArea').innerHTML=settings.formsUrl?`<a class="btn btn-soft" style="text-decoration:none" href="${esc(settings.formsUrl)}" target="_blank" rel="noopener">Microsoft Formsを開く</a>`:'<span class="subtitle">設定画面でFormsの回答URLを登録してください。</span>'}
 function renderSettings(){$('ownerName').value=settings.owner;$('settingsOwner').value=settings.owner;$('formsUrl').value=settings.formsUrl||''}
@@ -284,7 +290,7 @@ $('ownerName').oninput=e=>{settings.owner=e.target.value.trim();$('settingsOwner
 document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.section));if(b.dataset.section==='analysisSection')renderAnalysis();if(b.dataset.section==='sendSection')renderSend();window.scrollTo({top:0,behavior:'smooth'})});
 $('periodTabs').onclick=e=>{const b=e.target.closest('[data-period]');if(!b)return;analysisPeriod=b.dataset.period;document.querySelectorAll('#periodTabs button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.custom-only').forEach(x=>x.classList.toggle('hidden',analysisPeriod!=='custom'));renderAnalysis()};
 ['analysisDate','customStart','customEnd'].forEach(id=>$(id).onchange=renderAnalysis);$('printAnalysisBtn').onclick=()=>window.print();
-$('sendTodayBtn').onclick=sendToday;$('exportTodayCsvBtn').onclick=()=>{const arr=records.filter(r=>r.date===todayKey);if(!arr.length){toast('今日の記録はありません。');return}download(`営業業務時間_${todayKey}_${owner()}.csv`,makeCsv(arr),'text/csv;charset=utf-8')};$('exportAllCsvBtn').onclick=()=>download(`営業業務時間_全記録_${todayKey}.csv`,makeCsv(records),'text/csv;charset=utf-8');$('undoSentBtn').onclick=()=>{const n=records.filter(r=>r.date===todayKey&&r.sent).length;if(!n){toast('今日の送信済み記録はありません。');return}if(confirm(`${n}件を未送信に戻しますか？`)){records=records.map(r=>r.date===todayKey?{...r,sent:false,sentAt:null}:r);saveRecords();toast('未送信に戻しました。')}};
+$('sendTodayBtn').onclick=sendToday;$('confirmSentBtn').onclick=confirmTodaySent;$('exportTodayCsvBtn').onclick=()=>{const arr=records.filter(r=>r.date===todayKey);if(!arr.length){toast('今日の記録はありません。');return}download(`営業業務時間_${todayKey}_${owner()}.csv`,makeCsv(arr),'text/csv;charset=utf-8')};$('exportAllCsvBtn').onclick=()=>download(`営業業務時間_全記録_${todayKey}.csv`,makeCsv(records),'text/csv;charset=utf-8');$('undoSentBtn').onclick=()=>{const n=records.filter(r=>r.date===todayKey&&r.sent).length;if(!n){toast('今日の送信済み記録はありません。');return}if(confirm(`${n}件を未送信に戻しますか？`)){records=records.map(r=>r.date===todayKey?{...r,sent:false,sentAt:null}:r);saveRecords();toast('未送信に戻しました。')}};
 $('saveSettingsBtn').onclick=()=>{settings.owner=$('settingsOwner').value.trim();settings.formsUrl=$('formsUrl').value.trim();saveSettings();renderAll();toast('設定を保存しました。')};
 $('backupBtn').onclick=()=>download(`営業業務時間バックアップ_${todayKey}.json`,JSON.stringify({version:4,exportedAt:new Date().toISOString(),records,settings,sendLog},null,2),'application/json;charset=utf-8');
 $('restoreBtn').onclick=()=>$('restoreFile').click();$('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.records))throw new Error();if(!confirm(`${data.records.length}件の記録で現在のデータを置き換えますか？`))return;records=data.records;settings=Object.assign(settings,data.settings||{});sendLog=Array.isArray(data.sendLog)?data.sendLog:[];saveSettings();saveLog();saveRecords();toast('バックアップを復元しました。')}catch{alert('有効なバックアップファイルではありません。')}finally{e.target.value=''}};
