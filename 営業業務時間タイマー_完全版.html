@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#165dff">
+<title>営業業務時間タイマー</title>
+<style>
+:root{
+  --ink:#17202f;--muted:#687386;--line:#dce3ed;--blue:#165dff;--blue2:#0d47c7;
+  --green:#139b68;--orange:#e58a17;--purple:#7657c8;--red:#d64b55;--bg:#f4f7fb;
+  --shadow:0 16px 42px rgba(27,48,88,.11);--radius:20px
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(135deg,rgba(22,93,255,.06),transparent 36%),var(--bg);color:var(--ink);font-family:"BIZ UDPGothic","BIZ UDPゴシック","Yu Gothic UI",Meiryo,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{min-height:100vh;padding-bottom:92px}.wrap{width:min(1160px,100%);margin:auto;padding:24px 18px 48px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:20px}.eyebrow{margin:0 0 5px;color:var(--blue);font-size:11px;font-weight:900;letter-spacing:.16em}.topbar h1{margin:0;font-size:clamp(27px,4vw,42px);letter-spacing:-.03em}.subtitle{margin:8px 0 0;color:var(--muted);font-size:13px}.owner-pill{min-width:230px;padding:12px 14px;border:1px solid var(--line);border-radius:15px;background:#fff;box-shadow:0 8px 25px rgba(23,32,47,.05)}.owner-pill label{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:900}.owner-pill input{width:100%;height:38px;border:1px solid #ccd5e2;border-radius:9px;padding:0 10px;font-weight:800;outline:0}.owner-pill input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(22,93,255,.12)}
+.card{border:1px solid rgba(215,223,235,.95);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}.hidden{display:none!important}.section{display:none}.section.active{display:block}.section-title{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 16px}.section-title h2{margin:0;font-size:22px}.section-title p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.timer-card{padding:25px}.running-box{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:21px;border:1px solid #dfe5ef;border-radius:16px;background:#f8fafc}.running-box.on{border-color:rgba(19,155,104,.35);background:linear-gradient(90deg,#effbf6,#f8fcfa)}.status-dot{display:inline-block;width:9px;height:9px;margin-right:8px;border-radius:50%;background:#aab4c3}.status-dot.on{background:var(--green);box-shadow:0 0 0 6px rgba(19,155,104,.12)}.running-label{margin:0 0 7px;color:var(--muted);font-size:11px;font-weight:900}.running-task{margin:0;font-size:17px;font-weight:900}.running-start{margin:7px 0 0;color:var(--muted);font-size:11px}.clock{flex:none;color:var(--blue2);font:800 clamp(31px,7vw,48px)/1 ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.mini-card{padding:17px;border:1px solid #e2e7ef;border-radius:15px;background:#fff}.mini-card span{display:block;color:var(--muted);font-size:10px;font-weight:900}.mini-card strong{display:block;margin-top:8px;font-size:23px}.mini-card small{display:block;margin-top:5px;color:var(--muted);font-size:10px}.mini-card.primary{background:linear-gradient(145deg,#165dff,#0f48c8);color:#fff;border:0}.mini-card.primary span,.mini-card.primary small{color:rgba(255,255,255,.76)}
+.task-head,.task-row{display:grid;grid-template-columns:minmax(250px,1fr) 112px 82px 82px 98px;gap:9px;align-items:center}.task-head{padding:0 13px 8px;color:#8c96a5;font-size:9px;font-weight:900}.task-head span:not(:first-child){text-align:center}.task-list{overflow:hidden;border:1px solid #e2e7ef;border-radius:15px}.task-row{min-height:61px;padding:9px 12px}.task-row+.task-row{border-top:1px solid #edf1f5}.task-row.active{background:#effaf6}.task-name{font-size:12px;font-weight:800;line-height:1.45}.task-total{text-align:center;color:#536176;font:800 11px ui-monospace,monospace}.btn{min-height:40px;border:0;border-radius:10px;padding:0 13px;font-size:11px;font-weight:900;cursor:pointer}.btn:disabled{opacity:.3;cursor:not-allowed}.btn-primary{background:var(--blue);color:#fff}.btn-dark{background:#293548;color:#fff}.btn-outline{border:1px solid #bdc8d8;background:#fff;color:#3e4b60}.btn-green{background:var(--green);color:#fff}.btn-danger{background:#fff1f2;color:var(--red);border:1px solid #ffd5d9}.btn-soft{background:#eef4ff;color:var(--blue2)}
+.history-card{margin-top:18px;padding:22px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:12px}.toolbar h3{margin:0;font-size:16px}.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}input[type=date],select,.text-input,textarea{border:1px solid #cbd5e2;border-radius:10px;background:#fff;color:var(--ink);outline:0}.text-input,input[type=date],select{height:40px;padding:0 10px}.text-input:focus,input[type=date]:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(22,93,255,.11)}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px 9px;border-top:1px solid #edf0f5;font-size:11px;text-align:left;vertical-align:top}th{color:#7f8998;font-size:9px;letter-spacing:.04em;white-space:nowrap}.dur{color:var(--blue2);font-weight:900}.badge{display:inline-flex;align-items:center;min-height:23px;padding:0 8px;border-radius:999px;font-size:9px;font-weight:900}.badge-unsent{background:#fff4dc;color:#a86400}.badge-sent{background:#eaf8f2;color:#08744c}.icon-btn{width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:#9ba5b3;font-size:19px;cursor:pointer}.icon-btn:hover{background:#fff0f1;color:var(--red)}.empty{padding:38px 14px;color:#8a95a5;text-align:center;font-size:12px}
+.analysis-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:16px;margin-bottom:16px}.segmented{display:flex;padding:4px;border-radius:12px;background:#eef2f7}.segmented button{height:34px;padding:0 14px;border:0;border-radius:9px;background:transparent;color:#667286;font-size:11px;font-weight:900;cursor:pointer}.segmented button.active{background:#fff;color:var(--blue);box-shadow:0 3px 10px rgba(36,51,80,.12)}.range-fields{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.range-fields label{color:var(--muted);font-size:10px;font-weight:900}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:16px}.kpi{padding:20px}.kpi span{color:var(--muted);font-size:10px;font-weight:900}.kpi strong{display:block;margin:8px 0 5px;font-size:27px}.kpi small{color:var(--muted);font-size:10px}.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{padding:21px}.panel h3{margin:0 0 15px;font-size:16px}.group-row{display:grid;grid-template-columns:minmax(150px,1fr) 90px 75px;gap:8px;align-items:center;padding:11px 0}.group-row+.group-row{border-top:1px solid #eef1f5}.group-row span{font-size:11px;font-weight:800}.group-row strong{text-align:right;font-size:12px}.group-row small{text-align:right;color:var(--muted);font-size:10px}.bar{height:7px;margin-top:7px;overflow:hidden;border-radius:999px;background:#e9edf4}.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--blue),#5a9cff)}
+.chart-card{margin-top:16px;padding:22px}.chart-wrap{position:relative;width:100%;aspect-ratio:16/9;min-height:360px}.chart-wrap canvas{width:100%;height:100%;display:block}.facts{margin:0;padding-left:20px}.facts li{margin:9px 0;color:#3e4a5d;font-size:12px;line-height:1.7}.question-box{margin-top:14px;padding:16px;border-left:4px solid var(--orange);border-radius:10px;background:#fff8e8;font-size:12px;line-height:1.7}
+.send-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}.send-main{padding:24px}.send-status{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:19px;border:1px solid #e0e6ee;border-radius:15px;background:#f8fafc}.send-status strong{display:block;font-size:29px}.send-status span{color:var(--muted);font-size:11px}.send-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.notice{margin-top:15px;padding:14px;border-radius:12px;background:#fff8e9;color:#78500e;font-size:11px;line-height:1.7}.send-log{padding:24px}.log-row{display:flex;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #edf0f5}.log-row:last-child{border-bottom:0}.log-row span{font-size:11px}.log-row strong{font-size:11px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.settings-card{padding:23px}.settings-card h3{margin:0 0 15px;font-size:16px}.field{margin-bottom:14px}.field label{display:block;margin-bottom:7px;color:#5d687a;font-size:10px;font-weight:900}.field input,.field textarea{width:100%}.field textarea{min-height:90px;padding:10px;resize:vertical}.setting-actions{display:flex;gap:9px;flex-wrap:wrap}
+.bottom-nav{position:fixed;z-index:50;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,1fr);width:min(620px,calc(100% - 24px));padding:7px;border:1px solid rgba(205,215,229,.9);border-radius:17px;background:rgba(255,255,255,.94);box-shadow:0 18px 45px rgba(23,32,47,.2);backdrop-filter:blur(15px)}.nav-btn{height:52px;border:0;border-radius:12px;background:transparent;color:#7a8596;font-size:10px;font-weight:900;cursor:pointer}.nav-btn span{display:block;margin-bottom:4px;font-size:18px}.nav-btn.active{background:#edf3ff;color:var(--blue)}
+.modal{width:min(490px,calc(100% - 28px));padding:0;border:0;border-radius:20px;background:#fff;box-shadow:0 30px 90px rgba(18,31,57,.35)}.modal::backdrop{background:rgba(23,32,47,.52);backdrop-filter:blur(3px)}.modal-body{padding:25px}.modal h3{margin:0 0 6px}.modal-lead{margin:0 0 18px;color:var(--muted);font-size:12px}.modal-task{padding:12px 14px;border-radius:11px;background:#edf4ff;color:var(--blue2);font-size:12px;font-weight:900}.modal-fields{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:15px}.modal-fields .field{margin:0}.error{min-height:18px;margin:10px 0 0;color:var(--red);font-size:11px;font-weight:800}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
+.toast{position:fixed;z-index:100;left:50%;bottom:92px;transform:translate(-50%,20px);max-width:calc(100% - 28px);padding:12px 16px;border-radius:11px;background:#1f2937;color:#fff;font-size:11px;font-weight:800;opacity:0;pointer-events:none;transition:.22s}.toast.show{transform:translate(-50%,0);opacity:1}
+@media(max-width:850px){.summary-strip,.kpi-grid{grid-template-columns:repeat(2,1fr)}.analysis-grid,.send-grid,.settings-grid{grid-template-columns:1fr}.task-head{display:none}.task-row{grid-template-columns:minmax(0,1fr) repeat(3,78px);padding:12px}.task-name{grid-column:1/-1}.task-total{text-align:left}.topbar{flex-direction:column}.owner-pill{width:100%;min-width:0}.chart-wrap{min-height:300px}}
+@media(max-width:560px){.wrap{padding:18px 12px 36px}.timer-card,.panel,.chart-card,.history-card,.send-main,.send-log,.settings-card{padding:17px}.running-box{align-items:flex-start;flex-direction:column}.clock{align-self:flex-end}.summary-strip,.kpi-grid{grid-template-columns:1fr 1fr;gap:8px}.mini-card,.kpi{padding:14px}.mini-card strong,.kpi strong{font-size:21px}.task-row{grid-template-columns:1fr 1fr 1fr}.task-name{grid-column:1/-1}.task-total{grid-column:1/-1}.task-row .btn{padding:0 7px;font-size:10px}.toolbar{align-items:flex-start;flex-direction:column}.tools{width:100%}.tools input{flex:1}.modal-fields{grid-template-columns:1fr}.chart-wrap{min-height:250px}.bottom-nav{bottom:max(8px,env(safe-area-inset-bottom))}.send-status{align-items:flex-start;flex-direction:column}}
+@media print{.bottom-nav,.topbar,.analysis-controls,.send-actions,.setting-actions,.btn,.icon-btn{display:none!important}.app{padding:0}.wrap{width:100%;padding:0}.section{display:none!important}#analysisSection{display:block!important}.card{box-shadow:none;break-inside:avoid}.chart-wrap{min-height:480px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="wrap">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SALES WORKTIME TOOL</p>
+        <h1>営業業務時間タイマー</h1>
+        <p class="subtitle">開始・終了だけで記録し、日・週・月単位で業務時間を確認できます。</p>
+      </div>
+      <div class="owner-pill">
+        <label for="ownerName">担当者名</label>
+        <input id="ownerName" placeholder="例：上田 彩貴" autocomplete="name">
+      </div>
+    </header>
+
+    <section id="homeSection" class="section active">
+      <div class="section-title"><div><h2>ホーム</h2><p id="todayLabel"></p></div></div>
+      <div class="card timer-card">
+        <div id="runningBox" class="running-box">
+          <div>
+            <p class="running-label"><span id="statusDot" class="status-dot"></span><span id="runningState">待機中</span></p>
+            <p id="runningTask" class="running-task">開始する業務を選択してください</p>
+            <p id="runningStart" class="running-start"></p>
+          </div>
+          <div id="clock" class="clock">00:00:00</div>
+        </div>
+
+        <div class="summary-strip">
+          <div class="mini-card primary"><span>今日の合計</span><strong id="todayTotal">0分</strong><small id="todayCount">0件</small></div>
+          <div class="mini-card"><span>客先対応</span><strong id="todayCustomer">0分</strong><small id="todayCustomerRate">0.0%</small></div>
+          <div class="mini-card"><span>間接業務</span><strong id="todayIndirect">0分</strong><small id="todayIndirectRate">0.0%</small></div>
+          <div class="mini-card"><span>今日の未送信</span><strong id="todayUnsent">0件</strong><small id="lastSentMini">未送信</small></div>
+        </div>
+
+        <div class="task-head"><span>業務項目</span><span>本日合計</span><span>開始</span><span>終了</span><span>手動追加</span></div>
+        <div id="taskList" class="task-list"></div>
+      </div>
+
+      <div class="card history-card">
+        <div class="toolbar">
+          <h3>記録履歴</h3>
+          <div class="tools">
+            <input id="historyDate" type="date">
+            <button id="historyTodayBtn" class="btn btn-outline">今日</button>
+            <button id="clearDayBtn" class="btn btn-danger">この日の記録を削除</button>
+          </div>
+        </div>
+        <div id="historyArea"></div>
+      </div>
+    </section>
+
+    <section id="analysisSection" class="section">
+      <div class="section-title"><div><h2>業務分析</h2><p>対象期間の時間配分、前期間との差、客先対応・間接業務を確認します。</p></div><button id="printAnalysisBtn" class="btn btn-outline">印刷・PDF保存</button></div>
+      <div class="card analysis-controls">
+        <div id="periodTabs" class="segmented">
+          <button data-period="day" class="active">日</button><button data-period="week">週</button><button data-period="month">月</button><button data-period="custom">任意</button>
+        </div>
+        <div class="range-fields"><label>基準日</label><input id="analysisDate" type="date"><label class="custom-only hidden">開始</label><input id="customStart" class="custom-only hidden" type="date"><label class="custom-only hidden">終了</label><input id="customEnd" class="custom-only hidden" type="date"></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="card kpi"><span>登録された全体時間</span><strong id="kpiTotal">0分</strong><small id="kpiPeriod"></small></div>
+        <div class="card kpi"><span>客先対応</span><strong id="kpiCustomer">0分</strong><small id="kpiCustomerRate">0.0%</small></div>
+        <div class="card kpi"><span>間接業務</span><strong id="kpiIndirect">0分</strong><small id="kpiIndirectRate">0.0%</small></div>
+        <div class="card kpi"><span>前期間との差</span><strong id="kpiDiff">0分</strong><small id="kpiDiffNote"></small></div>
+      </div>
+      <div class="analysis-grid">
+        <div class="card panel"><h3>業務グループ別集計</h3><div id="groupSummary"></div></div>
+        <div class="card panel"><h3>業務項目別ランキング</h3><div id="taskRanking"></div></div>
+      </div>
+      <div class="card chart-card"><h3>業務時間内訳（対象期間・前期間比較）</h3><div class="chart-wrap"><canvas id="stackedChart" width="1600" height="900"></canvas></div><p id="chartNote" class="subtitle"></p></div>
+      <div class="analysis-grid" style="margin-top:16px">
+        <div class="card panel"><h3>数値から確認できること</h3><ul id="factsList" class="facts"></ul></div>
+        <div class="card panel"><h3>確認したいこと</h3><div id="questionBox" class="question-box"></div></div>
+      </div>
+    </section>
+
+    <section id="sendSection" class="section">
+      <div class="section-title"><div><h2>送信管理</h2><p>今日の集計をコピーし、Microsoft Formsへ1日1回送信します。</p></div></div>
+      <div class="send-grid">
+        <div class="card send-main">
+          <div class="send-status">
+            <div><span>今日の未送信データ</span><strong id="sendUnsentCount">0件</strong><span id="sendUnsentMinutes">合計0分</span></div>
+            <span id="sendStatusBadge" class="badge badge-sent">送信済み</span>
+          </div>
+          <div class="send-actions">
+            <button id="sendTodayBtn" class="btn btn-green">今日の集計をコピーしてFormsを開く</button>
+            <button id="exportTodayCsvBtn" class="btn btn-outline">今日のCSV（予備）</button>
+            <button id="exportAllCsvBtn" class="btn btn-outline">全記録CSV</button>
+            <button id="undoSentBtn" class="btn btn-outline">今日を未送信に戻す</button>
+          </div>
+          <div class="notice">終業時に緑のボタンを押してください。担当者名・対象日・合計時間・業務項目別の分数がコピーされ、Microsoft Formsが開きます。Formsの「1日の業務データ」欄へ貼り付けて送信してください。</div>
+          <div id="formsLinkArea" class="send-actions"></div>
+        </div>
+        <div class="card send-log"><h3 style="margin:0 0 12px">送信履歴</h3><div id="sendLogArea"></div></div>
+      </div>
+    </section>
+
+    <section id="settingsSection" class="section">
+      <div class="section-title"><div><h2>設定・バックアップ</h2><p>端末内のデータを保護し、機種変更やキャッシュ削除に備えます。</p></div></div>
+      <div class="settings-grid">
+        <div class="card settings-card">
+          <h3>基本設定</h3>
+          <div class="field"><label for="settingsOwner">担当者名</label><input id="settingsOwner" class="text-input"></div>
+          <div class="field"><label for="formsUrl">Microsoft Forms 回答URL</label><input id="formsUrl" class="text-input" type="url" placeholder="https://forms.office.com/... または https://forms.cloud.microsoft/..."></div>
+          <div class="setting-actions"><button id="saveSettingsBtn" class="btn btn-primary">設定を保存</button></div>
+        </div>
+        <div class="card settings-card">
+          <h3>データ管理</h3>
+          <div class="setting-actions">
+            <button id="backupBtn" class="btn btn-outline">JSONバックアップ</button>
+            <button id="restoreBtn" class="btn btn-outline">JSON復元</button>
+            <input id="restoreFile" class="hidden" type="file" accept="application/json,.json">
+            <button id="exportAnalysisBtn" class="btn btn-outline">分析CSV</button>
+            <button id="deleteAllBtn" class="btn btn-danger">全データ削除</button>
+          </div>
+          <div class="notice">iPhoneでSafariのWebサイトデータを削除すると、端末内の記録が消える可能性があります。定期的にJSONバックアップを「ファイル」アプリやOneDriveへ保存してください。</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="メインメニュー">
+    <button class="nav-btn active" data-section="homeSection"><span>⏱</span>ホーム</button>
+    <button class="nav-btn" data-section="analysisSection"><span>📊</span>分析</button>
+    <button class="nav-btn" data-section="sendSection"><span>☁</span>送信</button>
+    <button class="nav-btn" data-section="settingsSection"><span>⚙</span>設定</button>
+  </nav>
+</div>
+
+<dialog id="manualDialog" class="modal">
+  <form id="manualForm" class="modal-body" method="dialog">
+    <h3>時間を手動で追加</h3><p class="modal-lead">分数を入力して記録します。</p>
+    <div id="manualTaskLabel" class="modal-task"></div>
+    <div class="modal-fields">
+      <div class="field"><label for="manualDate">対象日</label><input id="manualDate" class="text-input" type="date" required></div>
+      <div class="field"><label for="manualMinutes">追加する時間（分）</label><input id="manualMinutes" class="text-input" type="number" min="1" max="1440" step="1" inputmode="numeric" placeholder="例：30" required></div>
+      <div class="field" style="grid-column:1/-1"><label for="manualComment">コメント（任意）</label><textarea id="manualComment" placeholder="例：販売店向け見積の修正"></textarea></div>
+    </div>
+    <p id="manualError" class="error"></p>
+    <div class="modal-actions"><button id="manualCancel" class="btn btn-outline" type="button">キャンセル</button><button class="btn btn-primary" type="submit">記録を追加</button></div>
+  </form>
+</dialog>
+<div id="toast" class="toast"></div>
+
+<script>
+(()=>{
+'use strict';
+const TASKS=[
+'顧客訪問/Web会議','移動','電話/メール対応(社外)','アポ調整(架電/メール/デスクネッツ登録)','技術問い合わせ/トラブル対応',
+'資料作成(エンド向け、事前準備、ChatGPT壁打ち)','資料作成(販売店向け提案活動/事前準備/チラシ)','資料作成(販売店向け数字分析/事前準備/リベート)',
+'販売店向け手続き(覚書/型番/サービス関連)','JUST(活動記入/案件精査)','JUST(見積)','JUST(特価見積)',
+'MFZ申請（稟議/交際費/試用版関連/セキュチェック/交通費等)','社内MTG（朝礼/夕礼/販売店/案件進捗）','社内MTG（事前事後/ロープレ）','その他（社内研修/社内資料作成/雑業務）'
+];
+const GROUPS={
+ A:{name:'客先対応・営業活動',tasks:[TASKS[0],TASKS[2],TASKS[3]]},
+ B:{name:'営業活動に付随する必要時間',tasks:[TASKS[1],TASKS[5],TASKS[11]]},
+ C:{name:'移管可能性確認業務',tasks:[TASKS[4],TASKS[6],TASKS[7],TASKS[8],TASKS[10]]},
+ D:{name:'社内・管理・事務業務',tasks:[TASKS[9],TASKS[12],TASKS[13],TASKS[14],TASKS[15]]}
+};
+const CUSTOMER=new Set(GROUPS.A.tasks);
+const INDIRECT=new Set([TASKS[4],TASKS[5],TASKS[6],TASKS[7],TASKS[8],TASKS[9],TASKS[10],TASKS[11],TASKS[12],TASKS[13],TASKS[14],TASKS[15]]);
+const COLORS=['#165dff','#1591d0','#4b7bec','#73a6ff','#e6942a','#18a36b','#efad46','#f0bc68','#de7d23','#7558c8','#ea9635','#46b77d','#9275d6','#ab8fe0','#6650a4','#8d98a8'];
+const KEY='sales_worktime_records_v4',TIMER_KEY='sales_worktime_timer_v4',SETTINGS_KEY='sales_worktime_settings_v4',LOG_KEY='sales_worktime_sendlog_v4';
+const $=id=>document.getElementById(id);
+const now=new Date();
+const pad=n=>String(n).padStart(2,'0');
+const dateKey=d=>{const x=new Date(d);return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`};
+const todayKey=dateKey(now);
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const uid=()=>Date.now()+'-'+Math.random().toString(16).slice(2);
+const safeParse=(v,f)=>{try{return JSON.parse(v)??f}catch{return f}};
+let records=safeParse(localStorage.getItem(KEY),[]);
+let active=safeParse(localStorage.getItem(TIMER_KEY),null);
+let settings=Object.assign({owner:'',formsUrl:''},safeParse(localStorage.getItem(SETTINGS_KEY),{}));
+if(!settings.formsUrl&&settings.sharepointUrl)settings.formsUrl='';
+let sendLog=safeParse(localStorage.getItem(LOG_KEY),[]);
+let historyDate=todayKey,analysisPeriod='day',manualTask='';
+let ticker=null;
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),2200)}
+function saveRecords(){localStorage.setItem(KEY,JSON.stringify(records));renderAll()}
+function saveActive(){active?localStorage.setItem(TIMER_KEY,JSON.stringify(active)):localStorage.removeItem(TIMER_KEY)}
+function saveSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}
+function saveLog(){localStorage.setItem(LOG_KEY,JSON.stringify(sendLog))}
+function msToClock(ms){const s=Math.max(0,Math.floor(ms/1000));return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
+function msToMinutes(ms){return ms/60000}
+function fmtMinutes(ms){const m=Math.round(msToMinutes(ms));if(m<60)return `${m}分`;return `${m}分（${Math.floor(m/60)}時間${m%60?m%60+'分':''}）`}
+function shortMinutes(ms){const m=Math.round(msToMinutes(ms));return m>=60?`${Math.floor(m/60)}時間${m%60?m%60+'分':''}`:`${m}分`}
+function formatDate(k){const d=new Date(k+'T00:00:00');return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`}
+function formatDateTime(ts){const d=new Date(ts);return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function dayStart(k){return new Date(k+'T00:00:00').getTime()}
+function addDays(k,n){const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return dateKey(d)}
+function recordsForRange(start,end){return records.filter(r=>r.date>=start&&r.date<=end)}
+function sum(arr){return arr.reduce((a,r)=>a+(Number(r.durationMs)||0),0)}
+function splitRecord(task,start,end,method='timer',comment=''){const out=[];let cur=start;while(cur<end){const d=new Date(cur),mid=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1).getTime(),last=Math.min(end,mid);out.push({id:uid(),task,startedAt:cur,endedAt:last,durationMs:last-cur,date:dateKey(cur),method,comment,sent:false,createdAt:Date.now()});cur=last}return out}
+function owner(){return settings.owner.trim()||'未設定'}
+
+function startTimer(task){if(active){toast('別の業務を終了してから開始してください。');return}active={task,startedAt:Date.now()};saveActive();renderTimer();ticker=setInterval(renderTimer,1000)}
+function stopTimer(){if(!active)return;const end=Date.now();records.push(...splitRecord(active.task,active.startedAt,end,'タイマー',''));active=null;saveActive();clearInterval(ticker);saveRecords();toast('記録しました。')}
+function renderTimer(){const on=!!active;$('runningBox').classList.toggle('on',on);$('statusDot').classList.toggle('on',on);$('runningState').textContent=on?'計測中':'待機中';$('runningTask').textContent=on?active.task:'開始する業務を選択してください';$('runningStart').textContent=on?`開始 ${formatDateTime(active.startedAt)}`:'';$('clock').textContent=on?msToClock(Date.now()-active.startedAt):'00:00:00';document.querySelectorAll('[data-start]').forEach(b=>b.disabled=on);document.querySelectorAll('[data-stop]').forEach(b=>b.disabled=!on||b.dataset.stop!==active?.task);document.querySelectorAll('.task-row').forEach(r=>r.classList.toggle('active',on&&r.dataset.task===active.task))}
+
+function renderTasks(){const today=records.filter(r=>r.date===todayKey);$('taskList').innerHTML=TASKS.map(t=>{const total=sum(today.filter(r=>r.task===t));return `<div class="task-row" data-task="${esc(t)}"><div class="task-name">${esc(t)}</div><div class="task-total">${msToClock(total)}</div><button class="btn btn-primary" data-start="${esc(t)}">開始</button><button class="btn btn-dark" data-stop="${esc(t)}">終了</button><button class="btn btn-outline" data-manual="${esc(t)}">手動追加</button></div>`}).join('');renderTimer()}
+function renderTodaySummary(){const arr=records.filter(r=>r.date===todayKey),total=sum(arr),customer=sum(arr.filter(r=>CUSTOMER.has(r.task))),indirect=sum(arr.filter(r=>INDIRECT.has(r.task))),unsent=arr.filter(r=>!r.sent);$('todayTotal').textContent=shortMinutes(total);$('todayCount').textContent=`${arr.length}件`;$('todayCustomer').textContent=shortMinutes(customer);$('todayCustomerRate').textContent=total?`${(customer/total*100).toFixed(1)}%`:'0.0%';$('todayIndirect').textContent=shortMinutes(indirect);$('todayIndirectRate').textContent=total?`${(indirect/total*100).toFixed(1)}%`:'0.0%';$('todayUnsent').textContent=`${unsent.length}件`;const last=sendLog.find(x=>x.date===todayKey);$('lastSentMini').textContent=last?`最終 ${last.time}`:'未送信'}
+function renderHistory(){const arr=records.filter(r=>r.date===historyDate).sort((a,b)=>b.startedAt-a.startedAt);if(!arr.length){$('historyArea').innerHTML='<div class="empty">この日の記録はありません。</div>';return}$('historyArea').innerHTML=`<div class="table-wrap"><table><thead><tr><th>業務項目</th><th>時間</th><th>登録方法</th><th>送信</th><th>コメント</th><th></th></tr></thead><tbody>${arr.map(r=>`<tr><td>${esc(r.task)}<br><small style="color:#8993a2">${formatDateTime(r.startedAt)}</small></td><td class="dur">${shortMinutes(r.durationMs)}</td><td>${esc(r.method||'')}</td><td><span class="badge ${r.sent?'badge-sent':'badge-unsent'}">${r.sent?'送信済':'未送信'}</span></td><td>${esc(r.comment||'')}</td><td><button class="icon-btn" data-delete="${r.id}" title="削除">×</button></td></tr>`).join('')}</tbody></table></div>`}
+
+function rangeFor(period,base){const d=new Date(base+'T00:00:00');if(period==='day')return {start:base,end:base,prevStart:addDays(base,-1),prevEnd:addDays(base,-1),label:formatDate(base)};if(period==='week'){const day=(d.getDay()+6)%7,start=new Date(d);start.setDate(d.getDate()-day);const end=new Date(start);end.setDate(start.getDate()+6);const ps=new Date(start);ps.setDate(start.getDate()-7),pe=new Date(end);pe.setDate(end.getDate()-7);return {start:dateKey(start),end:dateKey(end),prevStart:dateKey(ps),prevEnd:dateKey(pe),label:`${formatDate(dateKey(start))}〜${formatDate(dateKey(end))}`}}if(period==='month'){const start=new Date(d.getFullYear(),d.getMonth(),1),end=new Date(d.getFullYear(),d.getMonth()+1,0),ps=new Date(d.getFullYear(),d.getMonth()-1,1),pe=new Date(d.getFullYear(),d.getMonth(),0);return {start:dateKey(start),end:dateKey(end),prevStart:dateKey(ps),prevEnd:dateKey(pe),label:`${d.getFullYear()}年${d.getMonth()+1}月`}}const s=$('customStart').value||base,e=$('customEnd').value||base,days=Math.max(1,Math.round((dayStart(e)-dayStart(s))/86400000)+1);return {start:s,end:e,prevStart:addDays(s,-days),prevEnd:addDays(e,-days),label:`${formatDate(s)}〜${formatDate(e)}`}}
+function aggregate(arr){const total=sum(arr),byTask=Object.fromEntries(TASKS.map(t=>[t,{ms:0,count:0}]));arr.forEach(r=>{if(!byTask[r.task])byTask[r.task]={ms:0,count:0};byTask[r.task].ms+=r.durationMs;byTask[r.task].count++});const groups={};Object.values(GROUPS).forEach(g=>groups[g.name]=sum(arr.filter(r=>g.tasks.includes(r.task))));return {total,byTask,groups,customer:sum(arr.filter(r=>CUSTOMER.has(r.task))),indirect:sum(arr.filter(r=>INDIRECT.has(r.task))),indirectCount:arr.filter(r=>INDIRECT.has(r.task)).length,shortCount:arr.filter(r=>r.durationMs<10000).length}}
+function diffText(ms){const m=Math.round(msToMinutes(Math.abs(ms)));return ms>0?`＋${m}分`:ms<0?`－${m}分`:'0分'}
+function renderAnalysis(){const base=$('analysisDate').value||todayKey,range=rangeFor(analysisPeriod,base),cur=aggregate(recordsForRange(range.start,range.end)),prev=aggregate(recordsForRange(range.prevStart,range.prevEnd));$('kpiTotal').textContent=shortMinutes(cur.total);$('kpiPeriod').textContent=range.label;$('kpiCustomer').textContent=shortMinutes(cur.customer);$('kpiCustomerRate').textContent=cur.total?`全体の ${(cur.customer/cur.total*100).toFixed(1)}%`:'全体の 0.0%';$('kpiIndirect').textContent=shortMinutes(cur.indirect);$('kpiIndirectRate').textContent=cur.total?`全体の ${(cur.indirect/cur.total*100).toFixed(1)}%`:'全体の 0.0%';$('kpiDiff').textContent=diffText(cur.total-prev.total);$('kpiDiffNote').textContent=`前期間 ${shortMinutes(prev.total)}`;
+const maxGroup=Math.max(1,...Object.values(cur.groups));$('groupSummary').innerHTML=Object.values(GROUPS).map(g=>{const ms=cur.groups[g.name],rate=cur.total?ms/cur.total*100:0;return `<div class="group-row"><div><span>${g.name}</span><div class="bar"><i style="width:${ms/maxGroup*100}%"></i></div></div><strong>${shortMinutes(ms)}</strong><small>${rate.toFixed(1)}%</small></div>`}).join('');
+const ranked=TASKS.map(t=>({task:t,...cur.byTask[t],prev:prev.byTask[t]?.ms||0})).filter(x=>x.ms>0).sort((a,b)=>b.ms-a.ms);$('taskRanking').innerHTML=ranked.length?ranked.slice(0,10).map((x,i)=>`<div class="group-row"><div><span>${i+1}. ${esc(x.task)}</span><div class="bar"><i style="width:${ranked[0].ms?x.ms/ranked[0].ms*100:0}%"></i></div></div><strong>${shortMinutes(x.ms)}</strong><small>${cur.total?(x.ms/cur.total*100).toFixed(1):'0.0'}% / ${x.count}件</small></div>`).join(''):'<div class="empty">対象期間の記録はありません。</div>';
+const facts=[];facts.push(`登録された全体時間は${fmtMinutes(cur.total)}です。`);facts.push(`客先対応は${fmtMinutes(cur.customer)}で、全体の${cur.total?(cur.customer/cur.total*100).toFixed(1):'0.0'}％です。`);facts.push(`間接業務は${fmtMinutes(cur.indirect)}で、全体の${cur.total?(cur.indirect/cur.total*100).toFixed(1):'0.0'}％です。`);if(ranked[0])facts.push(`最も時間が長い業務は「${ranked[0].task}」の${fmtMinutes(ranked[0].ms)}です。`);const top3=ranked.slice(0,3).reduce((a,x)=>a+x.ms,0);if(top3)facts.push(`上位3項目の合計は${fmtMinutes(top3)}で、全体の${(top3/cur.total*100).toFixed(1)}％です。`);if(prev.total)facts.push(`前期間との差は${diffText(cur.total-prev.total)}です。`);if(cur.shortCount)facts.push(`10秒未満の短時間記録は${cur.shortCount}件です。`);$('factsList').innerHTML=facts.map(f=>`<li>${esc(f)}</li>`).join('');
+const indirectRank=ranked.filter(x=>INDIRECT.has(x.task));if(cur.total&&cur.indirect/cur.total>=.4&&indirectRank[0])$('questionBox').textContent=`「${indirectRank[0].task}」が間接業務の中で一番長く、合計${shortMinutes(indirectRank[0].ms)}でした。特にどんなところに時間がかかった感じですか？`;else $('questionBox').textContent='間接業務が全体の40％未満、または対象データがないため、確認質問はありません。';drawChart(cur,prev,range);}
+function drawChart(cur,prev,range){const canvas=$('stackedChart'),ctx=canvas.getContext('2d'),W=1600,H=900;canvas.width=W;canvas.height=H;ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.font='700 42px "BIZ UDPGothic","Yu Gothic UI",sans-serif';ctx.fillStyle='#17202f';ctx.fillText('営業業務時間内訳（対象期間・前期間比較）',80,78);ctx.font='24px "BIZ UDPGothic","Yu Gothic UI",sans-serif';ctx.fillStyle='#667286';ctx.fillText(`担当者：${owner()}　対象：${range.label}`,80,118);const max=Math.max(1,cur.total,prev.total),baseY=730,chartH=510,barW=220,xs=[430,810];ctx.strokeStyle='#dce3ed';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(180,baseY);ctx.lineTo(1120,baseY);ctx.stroke();[0,.25,.5,.75,1].forEach(p=>{const y=baseY-chartH*p;ctx.strokeStyle='#edf0f5';ctx.beginPath();ctx.moveTo(180,y);ctx.lineTo(1120,y);ctx.stroke();ctx.font='20px sans-serif';ctx.fillStyle='#7d8797';ctx.fillText(`${Math.round(msToMinutes(max*p))}分`,92,y+7)});const drawBar=(agg,x,label)=>{let y=baseY;TASKS.forEach((t,i)=>{const ms=agg.byTask[t]?.ms||0;if(!ms)return;const h=chartH*(ms/max);y-=h;ctx.fillStyle=COLORS[i];ctx.fillRect(x,y,barW,h)});ctx.fillStyle='#17202f';ctx.font='700 25px sans-serif';ctx.textAlign='center';ctx.fillText(shortMinutes(agg.total),x+barW/2,baseY-chartH*(agg.total/max)-18);ctx.font='700 24px sans-serif';ctx.fillText(label,x+barW/2,baseY+42);ctx.textAlign='left'};drawBar(prev,xs[0],'前期間');drawBar(cur,xs[1],'対象期間');let lx=1180,ly=172;ctx.font='18px "BIZ UDPGothic","Yu Gothic UI",sans-serif';TASKS.forEach((t,i)=>{if(!(cur.byTask[t].ms||prev.byTask[t].ms))return;ctx.fillStyle=COLORS[i];ctx.fillRect(lx,ly-15,20,20);ctx.fillStyle='#3e4b60';const short=t.length>24?t.slice(0,23)+'…':t;ctx.fillText(short,lx+30,ly);ly+=34});$('chartNote').textContent=prev.total?'前期間と対象期間を、業務項目ごとの積み上げで比較しています。':'前期間のデータがないため、対象期間を中心に表示しています。'}
+
+function csvEscape(v){const s=String(v??'');return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
+function download(name,text,type='text/plain;charset=utf-8'){const blob=new Blob(['\ufeff',text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function makeCsv(arr){const head=['担当者','対象日','業務項目','対応時間（分）','開始時刻','終了時刻','登録方法','コメント','記録ID'];const rows=arr.map(r=>[owner(),r.date,r.task,Math.round(msToMinutes(r.durationMs)),formatDateTime(r.startedAt),formatDateTime(r.endedAt),r.method||'',r.comment||'',r.id]);return [head,...rows].map(row=>row.map(csvEscape).join(',')).join('\n')}
+function makeDailySummary(arr){
+ const total=sum(arr),customer=sum(arr.filter(r=>CUSTOMER.has(r.task))),indirect=sum(arr.filter(r=>INDIRECT.has(r.task)));
+ const lines=[`担当者：${owner()}`,`対象日：${todayKey}`,`全体時間：${Math.round(msToMinutes(total))}分`,`客先対応：${Math.round(msToMinutes(customer))}分`,`間接業務：${Math.round(msToMinutes(indirect))}分`,'','【業務項目別】'];
+ TASKS.forEach(t=>{const ms=sum(arr.filter(r=>r.task===t));if(ms>0)lines.push(`${t}：${Math.round(msToMinutes(ms))}分`)});
+ const comments=arr.filter(r=>r.comment).map(r=>`${r.task}：${r.comment}`);if(comments.length)lines.push('','【コメント】',...comments);
+ return lines.join('\n');
+}
+async function sendToday(){
+ const arr=records.filter(r=>r.date===todayKey&&!r.sent);if(!arr.length){toast('今日の未送信記録はありません。');return}
+ if(!settings.formsUrl){alert('先に「設定」でMicrosoft Formsの回答URLを登録してください。');return}
+ if(!confirm(`${arr.length}件、合計${shortMinutes(sum(arr))}の集計をコピーしてFormsを開きますか？`))return;
+ const text=makeDailySummary(arr);
+ try{await navigator.clipboard.writeText(text)}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
+ window.open(settings.formsUrl,'_blank','noopener');
+ const ids=new Set(arr.map(r=>r.id));records=records.map(r=>ids.has(r.id)?{...r,sent:true,sentAt:Date.now()}:r);
+ sendLog.unshift({date:todayKey,time:pad(new Date().getHours())+':'+pad(new Date().getMinutes()),count:arr.length,minutes:Math.round(msToMinutes(sum(arr))),owner:owner()});saveLog();saveRecords();
+ alert('今日の集計をコピーしました。開いたFormsの「1日の業務データ」欄を長押しして「ペースト」し、送信してください。');
+}
+function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$('sendUnsentCount').textContent=`${arr.length}件`;$('sendUnsentMinutes').textContent=`合計${shortMinutes(sum(arr))}`;$('sendStatusBadge').textContent=arr.length?'未送信あり':'送信済み';$('sendStatusBadge').className=`badge ${arr.length?'badge-unsent':'badge-sent'}`;$('sendTodayBtn').disabled=!arr.length;$('sendLogArea').innerHTML=sendLog.length?sendLog.slice(0,20).map(x=>`<div class="log-row"><span>${esc(x.date)} ${esc(x.time)}<br><small>${esc(x.owner)}</small></span><strong>${x.count}件 / ${x.minutes}分</strong></div>`).join(''):'<div class="empty">送信履歴はありません。</div>';$('formsLinkArea').innerHTML=settings.formsUrl?`<a class="btn btn-soft" style="text-decoration:none" href="${esc(settings.formsUrl)}" target="_blank" rel="noopener">Microsoft Formsを開く</a>`:'<span class="subtitle">設定画面でFormsの回答URLを登録してください。</span>'}
+function renderSettings(){$('ownerName').value=settings.owner;$('settingsOwner').value=settings.owner;$('formsUrl').value=settings.formsUrl||''}
+function renderAll(){renderTasks();renderTodaySummary();renderHistory();renderAnalysis();renderSend();renderSettings()}
+
+$('taskList').addEventListener('click',e=>{const s=e.target.closest('[data-start]'),p=e.target.closest('[data-stop]'),m=e.target.closest('[data-manual]');if(s)startTimer(s.dataset.start);if(p)stopTimer();if(m){manualTask=m.dataset.manual;$('manualTaskLabel').textContent=manualTask;$('manualDate').value=historyDate||todayKey;$('manualMinutes').value='';$('manualComment').value='';$('manualError').textContent='';$('manualDialog').showModal();setTimeout(()=>$('manualMinutes').focus(),0)}});
+$('manualCancel').onclick=()=>$('manualDialog').close();
+$('manualForm').onsubmit=e=>{e.preventDefault();const date=$('manualDate').value,minutes=Number($('manualMinutes').value),comment=$('manualComment').value.trim();if(!date||!Number.isInteger(minutes)||minutes<1||minutes>1440){$('manualError').textContent='1〜1440の整数で分数を入力してください。';return}const end=Date.now(),start=end-minutes*60000;records.push({id:uid(),task:manualTask,startedAt:start,endedAt:end,durationMs:minutes*60000,date,method:'手動',comment,sent:false,createdAt:Date.now()});historyDate=date;$('historyDate').value=date;$('manualDialog').close();saveRecords();toast('手動記録を追加しました。')};
+$('historyDate').onchange=e=>{historyDate=e.target.value;renderHistory()};$('historyTodayBtn').onclick=()=>{historyDate=todayKey;$('historyDate').value=todayKey;renderHistory()};
+$('historyArea').onclick=e=>{const b=e.target.closest('[data-delete]');if(!b)return;if(confirm('この記録を削除しますか？')){records=records.filter(r=>r.id!==b.dataset.delete);saveRecords()}};
+$('clearDayBtn').onclick=()=>{if(confirm(`${formatDate(historyDate)}の記録をすべて削除しますか？`)){records=records.filter(r=>r.date!==historyDate);saveRecords()}};
+$('ownerName').oninput=e=>{settings.owner=e.target.value.trim();$('settingsOwner').value=settings.owner;saveSettings();document.title=(settings.owner?settings.owner+'｜':'')+'営業業務時間タイマー'};
+
+document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.section));if(b.dataset.section==='analysisSection')renderAnalysis();if(b.dataset.section==='sendSection')renderSend();window.scrollTo({top:0,behavior:'smooth'})});
+$('periodTabs').onclick=e=>{const b=e.target.closest('[data-period]');if(!b)return;analysisPeriod=b.dataset.period;document.querySelectorAll('#periodTabs button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.custom-only').forEach(x=>x.classList.toggle('hidden',analysisPeriod!=='custom'));renderAnalysis()};
+['analysisDate','customStart','customEnd'].forEach(id=>$(id).onchange=renderAnalysis);$('printAnalysisBtn').onclick=()=>window.print();
+$('sendTodayBtn').onclick=sendToday;$('exportTodayCsvBtn').onclick=()=>{const arr=records.filter(r=>r.date===todayKey);if(!arr.length){toast('今日の記録はありません。');return}download(`営業業務時間_${todayKey}_${owner()}.csv`,makeCsv(arr),'text/csv;charset=utf-8')};$('exportAllCsvBtn').onclick=()=>download(`営業業務時間_全記録_${todayKey}.csv`,makeCsv(records),'text/csv;charset=utf-8');$('undoSentBtn').onclick=()=>{const n=records.filter(r=>r.date===todayKey&&r.sent).length;if(!n){toast('今日の送信済み記録はありません。');return}if(confirm(`${n}件を未送信に戻しますか？`)){records=records.map(r=>r.date===todayKey?{...r,sent:false,sentAt:null}:r);saveRecords();toast('未送信に戻しました。')}};
+$('saveSettingsBtn').onclick=()=>{settings.owner=$('settingsOwner').value.trim();settings.formsUrl=$('formsUrl').value.trim();saveSettings();renderAll();toast('設定を保存しました。')};
+$('backupBtn').onclick=()=>download(`営業業務時間バックアップ_${todayKey}.json`,JSON.stringify({version:4,exportedAt:new Date().toISOString(),records,settings,sendLog},null,2),'application/json;charset=utf-8');
+$('restoreBtn').onclick=()=>$('restoreFile').click();$('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.records))throw new Error();if(!confirm(`${data.records.length}件の記録で現在のデータを置き換えますか？`))return;records=data.records;settings=Object.assign(settings,data.settings||{});sendLog=Array.isArray(data.sendLog)?data.sendLog:[];saveSettings();saveLog();saveRecords();toast('バックアップを復元しました。')}catch{alert('有効なバックアップファイルではありません。')}finally{e.target.value=''}};
+$('exportAnalysisBtn').onclick=()=>{const range=rangeFor(analysisPeriod,$('analysisDate').value||todayKey),arr=recordsForRange(range.start,range.end),agg=aggregate(arr),head=['順位','業務項目','合計時間（分）','構成比（%）','件数','1件平均（分）'];const rows=TASKS.map(t=>({t,...agg.byTask[t]})).filter(x=>x.ms).sort((a,b)=>b.ms-a.ms).map((x,i)=>[i+1,x.t,Math.round(msToMinutes(x.ms)),agg.total?(x.ms/agg.total*100).toFixed(1):'0.0',x.count,x.count?(msToMinutes(x.ms)/x.count).toFixed(1):'0.0']);download(`営業業務時間_分析_${range.start}_${range.end}.csv`,[head,...rows].map(r=>r.map(csvEscape).join(',')).join('\n'),'text/csv;charset=utf-8')};
+$('deleteAllBtn').onclick=()=>{if(confirm('すべての記録・送信履歴を削除します。この操作は元に戻せません。')){records=[];sendLog=[];active=null;localStorage.removeItem(KEY);localStorage.removeItem(LOG_KEY);localStorage.removeItem(TIMER_KEY);saveActive();renderAll();toast('全データを削除しました。')}};
+
+$('todayLabel').textContent=formatDate(todayKey);$('historyDate').value=todayKey;$('analysisDate').value=todayKey;$('customStart').value=todayKey;$('customEnd').value=todayKey;
+renderAll();if(active){ticker=setInterval(renderTimer,1000)}
+})();
+</script>
+</body>
+</html>
