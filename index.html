@@ -123,7 +123,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
             <button id="exportAllCsvBtn" class="btn btn-outline">全記録CSV</button>
             <button id="undoSentBtn" class="btn btn-outline">今日を未送信に戻す</button>
           </div>
-          <div class="notice">①緑のボタンを押す → ②Formsの「営業日報」欄へ1回貼り付ける → ③Formsで送信する → ④この画面へ戻り「Forms送信完了にする」を押してください。担当者名や日付をFormsで選ぶ必要はありません。</div>
+          <div class="notice">①緑のボタンを押す → ②Formsの「営業日報」欄へ1回貼り付ける → ③Formsで送信する → ④この画面へ戻り「Forms送信完了にする」を押してください。担当者名や日付をFormsで選ぶ必要はありません。全16業務項目を0分も含めて固定形式でコピーします。</div>
           <div id="formsLinkArea" class="send-actions"></div>
         </div>
         <div class="card send-log"><h3 style="margin:0 0 12px">送信履歴</h3><div id="sendLogArea"></div></div>
@@ -254,9 +254,22 @@ function download(name,text,type='text/plain;charset=utf-8'){const blob=new Blob
 function makeCsv(arr){const head=['担当者','対象日','業務項目','対応時間（分）','開始時刻','終了時刻','登録方法','コメント','記録ID'];const rows=arr.map(r=>[owner(),r.date,r.task,Math.round(msToMinutes(r.durationMs)),formatDateTime(r.startedAt),formatDateTime(r.endedAt),r.method||'',r.comment||'',r.id]);return [head,...rows].map(row=>row.map(csvEscape).join(',')).join('\n')}
 function makeDailySummary(arr){
  const total=sum(arr),customer=sum(arr.filter(r=>CUSTOMER.has(r.task))),indirect=sum(arr.filter(r=>INDIRECT.has(r.task)));
- const lines=[`担当者：${owner()}`,`対象日：${todayKey}`,`全体時間：${Math.round(msToMinutes(total))}分`,`客先対応：${Math.round(msToMinutes(customer))}分`,`間接業務：${Math.round(msToMinutes(indirect))}分`,'','【業務項目別】'];
- TASKS.forEach(t=>{const ms=sum(arr.filter(r=>r.task===t));if(ms>0)lines.push(`${t}：${Math.round(msToMinutes(ms))}分`)});
- const comments=arr.filter(r=>r.comment).map(r=>`${r.task}：${r.comment}`);if(comments.length)lines.push('','【コメント】',...comments);
+ // ExcelやPower Queryで分解しやすいよう、すべて「項目名=数値」の固定形式で出力する。
+ // 業務時間が0分の項目も含め、毎回16項目を同じ順番で出力する。
+ const lines=[
+  `担当者=${owner()}`,
+  `対象日=${todayKey}`,
+  `全体時間=${Math.round(msToMinutes(total))}`,
+  `客先対応=${Math.round(msToMinutes(customer))}`,
+  `間接業務=${Math.round(msToMinutes(indirect))}`,
+  'データ形式=業務項目別時間（分）'
+ ];
+ TASKS.forEach(t=>{
+  const minutes=Math.round(msToMinutes(sum(arr.filter(r=>r.task===t))));
+  lines.push(`${t}=${minutes}`);
+ });
+ const comments=arr.filter(r=>r.comment).map(r=>`${r.task}:${String(r.comment).replace(/[\r\n]+/g,' ')}`);
+ lines.push(`コメント=${comments.join(' / ')}`);
  return lines.join('\n');
 }
 async function sendToday(){
@@ -267,7 +280,7 @@ async function sendToday(){
  try{await navigator.clipboard.writeText(text)}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
  toast('営業日報をコピーしました。');
  window.open(settings.formsUrl,'_blank','noopener');
- setTimeout(()=>alert('Formsの「営業日報」欄へ1回貼り付けて送信してください。送信後、この画面へ戻って「Forms送信完了にする」を押してください。'),250);
+ setTimeout(()=>alert('Formsの「業務時間コピペ」欄へ1回貼り付けて送信してください。全16項目が0分を含めて出力されます。送信後、この画面へ戻って「Forms送信完了にする」を押してください。'),250);
 }
 function markTodaySent(){
  const arr=records.filter(r=>r.date===todayKey&&!r.sent);
