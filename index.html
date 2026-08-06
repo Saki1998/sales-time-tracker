@@ -214,7 +214,7 @@ let records=safeParse(localStorage.getItem(KEY),[]);
 const storedTimers=safeParse(localStorage.getItem(TIMER_KEY),[]);
 // v4の単一タイマー形式も引き継ぎつつ、以後は複数タイマーを配列で保持する。
 let activeTimers=Array.isArray(storedTimers)?storedTimers:(storedTimers?.task?[storedTimers]:[]);
-const DEFAULT_FORMS_URL='https://chatgpt.com/g/g-p-6a73d19e3dd4819182ff3789625edd15-ps1ye-wu-shi-jian-fen-xi/project';
+const DEFAULT_FORMS_URL='https://chatgpt.com/g/g-p-6a73f1c8f3c08191b392e40c44e36700-ps1ye-wu-shi-jian-fen-xi/project';
 let settings=Object.assign({owner:'',formsUrl:DEFAULT_FORMS_URL},safeParse(localStorage.getItem(SETTINGS_KEY),{}));
 if(!settings.formsUrl || /forms\.(office|cloud)\.microsoft|forms\.office\.com/i.test(settings.formsUrl))settings.formsUrl=DEFAULT_FORMS_URL;
 let sendLog=safeParse(localStorage.getItem(LOG_KEY),[]);
