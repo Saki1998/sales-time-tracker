@@ -205,7 +205,9 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const uid=()=>Date.now()+'-'+Math.random().toString(16).slice(2);
 const safeParse=(v,f)=>{try{return JSON.parse(v)??f}catch{return f}};
 let records=safeParse(localStorage.getItem(KEY),[]);
-let active=safeParse(localStorage.getItem(TIMER_KEY),null);
+const storedTimers=safeParse(localStorage.getItem(TIMER_KEY),[]);
+// v4の単一タイマー形式も引き継ぎつつ、以後は複数タイマーを配列で保持する。
+let activeTimers=Array.isArray(storedTimers)?storedTimers:(storedTimers?.task?[storedTimers]:[]);
 const DEFAULT_FORMS_URL='https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=xJHHp1r85U26tLRN0Tnm9h77U5QncjpCuT7bpwam2RlURjJZNllPWTJCQTVVN1QyVU9YTTcxUDkyMi4u';
 let settings=Object.assign({owner:'',formsUrl:DEFAULT_FORMS_URL},safeParse(localStorage.getItem(SETTINGS_KEY),{}));
 if(!settings.formsUrl)settings.formsUrl=DEFAULT_FORMS_URL;
@@ -215,7 +217,7 @@ let ticker=null;
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),2200)}
 function saveRecords(){localStorage.setItem(KEY,JSON.stringify(records));renderAll()}
-function saveActive(){active?localStorage.setItem(TIMER_KEY,JSON.stringify(active)):localStorage.removeItem(TIMER_KEY)}
+function saveActive(){activeTimers.length?localStorage.setItem(TIMER_KEY,JSON.stringify(activeTimers)):localStorage.removeItem(TIMER_KEY)}
 function saveSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}
 function saveLog(){localStorage.setItem(LOG_KEY,JSON.stringify(sendLog))}
 function msToClock(ms){const s=Math.max(0,Math.floor(ms/1000));return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
@@ -231,9 +233,34 @@ function sum(arr){return arr.reduce((a,r)=>a+(Number(r.durationMs)||0),0)}
 function splitRecord(task,start,end,method='timer',comment=''){const out=[];let cur=start;while(cur<end){const d=new Date(cur),mid=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1).getTime(),last=Math.min(end,mid);out.push({id:uid(),task,startedAt:cur,endedAt:last,durationMs:last-cur,date:dateKey(cur),method,comment,sent:false,createdAt:Date.now()});cur=last}return out}
 function owner(){return settings.owner.trim()||'未設定'}
 
-function startTimer(task){if(active){toast('別の業務を終了してから開始してください。');return}active={task,startedAt:Date.now()};saveActive();renderTimer();ticker=setInterval(renderTimer,1000)}
-function stopTimer(){if(!active)return;const end=Date.now();records.push(...splitRecord(active.task,active.startedAt,end,'タイマー',''));active=null;saveActive();clearInterval(ticker);saveRecords();toast('記録しました。')}
-function renderTimer(){const on=!!active;$('runningBox').classList.toggle('on',on);$('statusDot').classList.toggle('on',on);$('runningState').textContent=on?'計測中':'待機中';$('runningTask').textContent=on?active.task:'開始する業務を選択してください';$('runningStart').textContent=on?`開始 ${formatDateTime(active.startedAt)}`:'';$('clock').textContent=on?msToClock(Date.now()-active.startedAt):'00:00:00';document.querySelectorAll('[data-start]').forEach(b=>b.disabled=on);document.querySelectorAll('[data-stop]').forEach(b=>b.disabled=!on||b.dataset.stop!==active?.task);document.querySelectorAll('.task-row').forEach(r=>r.classList.toggle('active',on&&r.dataset.task===active.task))}
+function startTimer(task){
+ if(activeTimers.some(x=>x.task===task)){toast('この業務はすでに計測中です。');return}
+ activeTimers.push({task,startedAt:Date.now()});saveActive();renderTimer();
+ if(!ticker)ticker=setInterval(renderTimer,1000);
+}
+function stopTimer(task){
+ const timer=activeTimers.find(x=>x.task===task);if(!timer)return;
+ const end=Date.now();records.push(...splitRecord(timer.task,timer.startedAt,end,'タイマー',''));
+ activeTimers=activeTimers.filter(x=>x!==timer);saveActive();
+ if(!activeTimers.length){clearInterval(ticker);ticker=null}
+ saveRecords();toast(`「${task}」を記録しました。`);
+}
+function renderTimer(){
+ const on=activeTimers.length>0,oldest=on?Math.min(...activeTimers.map(x=>x.startedAt)):0;
+ $('runningBox').classList.toggle('on',on);$('statusDot').classList.toggle('on',on);
+ $('runningState').textContent=on?`${activeTimers.length}件を計測中`:'待機中';
+ $('runningTask').textContent=on?activeTimers.map(x=>x.task).join(' ／ '):'開始する業務を選択してください';
+ $('runningStart').textContent=on?`最も早い開始 ${formatDateTime(oldest)}`:'';
+ $('clock').textContent=on?msToClock(Date.now()-oldest):'00:00:00';
+ document.querySelectorAll('[data-start]').forEach(b=>b.disabled=activeTimers.some(x=>x.task===b.dataset.start));
+ document.querySelectorAll('[data-stop]').forEach(b=>b.disabled=!activeTimers.some(x=>x.task===b.dataset.stop));
+ document.querySelectorAll('.task-row').forEach(r=>{
+  const timer=activeTimers.find(x=>x.task===r.dataset.task);
+  r.classList.toggle('active',!!timer);
+  const total=r.querySelector('.task-total');
+  if(total){const recorded=sum(records.filter(x=>x.date===todayKey&&x.task===r.dataset.task));const live=timer?Date.now()-Math.max(timer.startedAt,dayStart(todayKey)):0;total.textContent=msToClock(recorded+live)}
+ });
+}
 
 function renderTasks(){const today=records.filter(r=>r.date===todayKey);$('taskList').innerHTML=TASKS.map(t=>{const total=sum(today.filter(r=>r.task===t));return `<div class="task-row" data-task="${esc(t)}"><div class="task-name">${esc(t)}</div><div class="task-total">${msToClock(total)}</div><button class="btn btn-primary" data-start="${esc(t)}">開始</button><button class="btn btn-dark" data-stop="${esc(t)}">終了</button><button class="btn btn-outline" data-manual="${esc(t)}">手動追加</button></div>`}).join('');renderTimer()}
 function renderTodaySummary(){const arr=records.filter(r=>r.date===todayKey),total=sum(arr),customer=sum(arr.filter(r=>CUSTOMER.has(r.task))),indirect=sum(arr.filter(r=>INDIRECT.has(r.task))),unsent=arr.filter(r=>!r.sent);$('todayTotal').textContent=shortMinutes(total);$('todayCount').textContent=`${arr.length}件`;$('todayCustomer').textContent=shortMinutes(customer);$('todayCustomerRate').textContent=total?`${(customer/total*100).toFixed(1)}%`:'0.0%';$('todayIndirect').textContent=shortMinutes(indirect);$('todayIndirectRate').textContent=total?`${(indirect/total*100).toFixed(1)}%`:'0.0%';$('todayUnsent').textContent=`${unsent.length}件`;const last=sendLog.find(x=>x.date===todayKey);$('lastSentMini').textContent=last?`最終 ${last.time}`:'未送信'}
@@ -296,7 +323,7 @@ function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$(
 function renderSettings(){$('ownerName').value=settings.owner;$('settingsOwner').value=settings.owner;$('formsUrl').value=settings.formsUrl||''}
 function renderAll(){renderTasks();renderTodaySummary();renderHistory();renderAnalysis();renderSend();renderSettings()}
 
-$('taskList').addEventListener('click',e=>{const s=e.target.closest('[data-start]'),p=e.target.closest('[data-stop]'),m=e.target.closest('[data-manual]');if(s)startTimer(s.dataset.start);if(p)stopTimer();if(m){manualTask=m.dataset.manual;$('manualTaskLabel').textContent=manualTask;$('manualDate').value=historyDate||todayKey;$('manualMinutes').value='';$('manualComment').value='';$('manualError').textContent='';$('manualDialog').showModal();setTimeout(()=>$('manualMinutes').focus(),0)}});
+$('taskList').addEventListener('click',e=>{const s=e.target.closest('[data-start]'),p=e.target.closest('[data-stop]'),m=e.target.closest('[data-manual]');if(s)startTimer(s.dataset.start);if(p)stopTimer(p.dataset.stop);if(m){manualTask=m.dataset.manual;$('manualTaskLabel').textContent=manualTask;$('manualDate').value=historyDate||todayKey;$('manualMinutes').value='';$('manualComment').value='';$('manualError').textContent='';$('manualDialog').showModal();setTimeout(()=>$('manualMinutes').focus(),0)}});
 $('manualCancel').onclick=()=>$('manualDialog').close();
 $('manualForm').onsubmit=e=>{e.preventDefault();const date=$('manualDate').value,minutes=Number($('manualMinutes').value),comment=$('manualComment').value.trim();if(!date||!Number.isInteger(minutes)||minutes<1||minutes>1440){$('manualError').textContent='1〜1440の整数で分数を入力してください。';return}const end=Date.now(),start=end-minutes*60000;records.push({id:uid(),task:manualTask,startedAt:start,endedAt:end,durationMs:minutes*60000,date,method:'手動',comment,sent:false,createdAt:Date.now()});historyDate=date;$('historyDate').value=date;$('manualDialog').close();saveRecords();toast('手動記録を追加しました。')};
 $('historyDate').onchange=e=>{historyDate=e.target.value;renderHistory()};$('historyTodayBtn').onclick=()=>{historyDate=todayKey;$('historyDate').value=todayKey;renderHistory()};
@@ -312,10 +339,10 @@ $('saveSettingsBtn').onclick=()=>{settings.owner=$('settingsOwner').value.trim()
 $('backupBtn').onclick=()=>download(`営業業務時間バックアップ_${todayKey}.json`,JSON.stringify({version:4,exportedAt:new Date().toISOString(),records,settings,sendLog},null,2),'application/json;charset=utf-8');
 $('restoreBtn').onclick=()=>$('restoreFile').click();$('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.records))throw new Error();if(!confirm(`${data.records.length}件の記録で現在のデータを置き換えますか？`))return;records=data.records;settings=Object.assign(settings,data.settings||{});sendLog=Array.isArray(data.sendLog)?data.sendLog:[];saveSettings();saveLog();saveRecords();toast('バックアップを復元しました。')}catch{alert('有効なバックアップファイルではありません。')}finally{e.target.value=''}};
 $('exportAnalysisBtn').onclick=()=>{const range=rangeFor(analysisPeriod,$('analysisDate').value||todayKey),arr=recordsForRange(range.start,range.end),agg=aggregate(arr),head=['順位','業務項目','合計時間（分）','構成比（%）','件数','1件平均（分）'];const rows=TASKS.map(t=>({t,...agg.byTask[t]})).filter(x=>x.ms).sort((a,b)=>b.ms-a.ms).map((x,i)=>[i+1,x.t,Math.round(msToMinutes(x.ms)),agg.total?(x.ms/agg.total*100).toFixed(1):'0.0',x.count,x.count?(msToMinutes(x.ms)/x.count).toFixed(1):'0.0']);download(`営業業務時間_分析_${range.start}_${range.end}.csv`,[head,...rows].map(r=>r.map(csvEscape).join(',')).join('\n'),'text/csv;charset=utf-8')};
-$('deleteAllBtn').onclick=()=>{if(confirm('すべての記録・送信履歴を削除します。この操作は元に戻せません。')){records=[];sendLog=[];active=null;localStorage.removeItem(KEY);localStorage.removeItem(LOG_KEY);localStorage.removeItem(TIMER_KEY);saveActive();renderAll();toast('全データを削除しました。')}};
+$('deleteAllBtn').onclick=()=>{if(confirm('すべての記録・送信履歴を削除します。この操作は元に戻せません。')){records=[];sendLog=[];activeTimers=[];clearInterval(ticker);ticker=null;localStorage.removeItem(KEY);localStorage.removeItem(LOG_KEY);localStorage.removeItem(TIMER_KEY);saveActive();renderAll();toast('全データを削除しました。')}};
 
 $('todayLabel').textContent=formatDate(todayKey);$('historyDate').value=todayKey;$('analysisDate').value=todayKey;$('customStart').value=todayKey;$('customEnd').value=todayKey;
-renderAll();if(active){ticker=setInterval(renderTimer,1000)}
+renderAll();if(activeTimers.length){ticker=setInterval(renderTimer,1000)}
 })();
 </script>
 </body>
