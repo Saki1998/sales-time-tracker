@@ -115,7 +115,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
     </section>
 
     <section id="sendSection" class="section">
-      <div class="section-title"><div><h2>送信管理</h2><p>今日の集計をコピーし、Microsoft Formsへ1日1回送信します。</p></div></div>
+      <div class="section-title"><div><h2>送信管理</h2><p>今日の集計をコピーし、ChatGPTの営業業務時間分析PJを開きます。</p></div></div>
       <div class="send-grid">
         <div class="card send-main">
           <div class="send-status">
@@ -123,13 +123,13 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
             <span id="sendStatusBadge" class="badge badge-sent">送信済み</span>
           </div>
           <div class="send-actions">
-            <button id="sendTodayBtn" class="btn btn-green">営業日報をコピーしてFormsを開く</button>
-            <button id="markSentBtn" class="btn btn-primary">Forms送信完了にする</button>
+            <button id="sendTodayBtn" class="btn btn-green">営業日報をコピーしてChatGPT PJを開く</button>
+            <button id="markSentBtn" class="btn btn-primary">ChatGPT分析済みにする</button>
             <button id="exportTodayCsvBtn" class="btn btn-outline">今日のCSV（予備）</button>
             <button id="exportAllCsvBtn" class="btn btn-outline">全記録CSV</button>
             <button id="undoSentBtn" class="btn btn-outline">今日を未送信に戻す</button>
           </div>
-          <div class="notice">①緑のボタンを押す → ②Formsの「営業日報」欄へ1回貼り付ける → ③Formsで送信する → ④この画面へ戻り「Forms送信完了にする」を押してください。担当者名や日付をFormsで選ぶ必要はありません。全16業務項目を0分も含めて固定形式でコピーします。</div>
+          <div class="notice">①緑のボタンを押す → ②開いたChatGPTの営業業務時間分析PJへ貼り付ける → ③分析を実行する → ④この画面へ戻り「ChatGPT分析済みにする」を押してください。全16業務項目を0分も含めて固定形式でコピーします。</div>
           <div id="formsLinkArea" class="send-actions"></div>
         </div>
         <div class="card send-log"><h3 style="margin:0 0 12px">送信履歴</h3><div id="sendLogArea"></div></div>
@@ -142,7 +142,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
         <div class="card settings-card">
           <h3>基本設定</h3>
           <div class="field"><label for="settingsOwner">担当者名</label><input id="settingsOwner" class="text-input"></div>
-          <div class="field"><label for="formsUrl">Microsoft Forms 回答URL</label><input id="formsUrl" class="text-input" type="url" placeholder="https://forms.office.com/... または https://forms.cloud.microsoft/..."></div>
+          <div class="field"><label for="formsUrl">ChatGPT プロジェクトURL</label><input id="formsUrl" class="text-input" type="url" placeholder="https://chatgpt.com/g/g-p-6a73d19e3dd4819182ff3789625edd15-ps1ye-wu-shi-jian-fen-xi/project"></div>
           <div class="setting-actions"><button id="saveSettingsBtn" class="btn btn-primary">設定を保存</button></div>
         </div>
         <div class="card settings-card">
@@ -214,9 +214,9 @@ let records=safeParse(localStorage.getItem(KEY),[]);
 const storedTimers=safeParse(localStorage.getItem(TIMER_KEY),[]);
 // v4の単一タイマー形式も引き継ぎつつ、以後は複数タイマーを配列で保持する。
 let activeTimers=Array.isArray(storedTimers)?storedTimers:(storedTimers?.task?[storedTimers]:[]);
-const DEFAULT_FORMS_URL='https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=xJHHp1r85U26tLRN0Tnm9h77U5QncjpCuT7bpwam2RlURjJZNllPWTJCQTVVN1QyVU9YTTcxUDkyMi4u';
+const DEFAULT_FORMS_URL='https://chatgpt.com/g/g-p-6a73d19e3dd4819182ff3789625edd15-ps1ye-wu-shi-jian-fen-xi/project';
 let settings=Object.assign({owner:'',formsUrl:DEFAULT_FORMS_URL},safeParse(localStorage.getItem(SETTINGS_KEY),{}));
-if(!settings.formsUrl)settings.formsUrl=DEFAULT_FORMS_URL;
+if(!settings.formsUrl || /forms\.(office|cloud)\.microsoft|forms\.office\.com/i.test(settings.formsUrl))settings.formsUrl=DEFAULT_FORMS_URL;
 let sendLog=safeParse(localStorage.getItem(LOG_KEY),[]);
 let historyDate=todayKey,analysisPeriod='day',manualTask='';
 let ticker=null;
@@ -342,24 +342,24 @@ function makeDailySummary(arr){
 async function sendToday(){
  const arr=records.filter(r=>r.date===todayKey&&!r.sent);if(!arr.length){toast('今日の未送信記録はありません。');return}
  if(!settings.owner.trim()){alert('先に画面上部の「担当者名」を入力してください。');$('ownerName').focus();return}
- if(!settings.formsUrl){alert('先に「設定」でMicrosoft Formsの回答URLを登録してください。');return}
+ if(!settings.formsUrl){alert('先に「設定」でChatGPTプロジェクトURLを登録してください。');return}
  const text=makeDailySummary(arr);
  try{await navigator.clipboard.writeText(text)}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
  toast('営業日報をコピーしました。');
  window.open(settings.formsUrl,'_blank','noopener');
- setTimeout(()=>alert('Formsの「業務時間コピペ」欄へ1回貼り付けて送信してください。全16項目が0分を含めて出力されます。送信後、この画面へ戻って「Forms送信完了にする」を押してください。'),250);
+ setTimeout(()=>alert('開いたChatGPTの営業業務時間分析PJへ貼り付けて、分析を実行してください。全16項目が0分を含めてコピーされています。分析後、この画面へ戻って「ChatGPT分析済みにする」を押してください。'),250);
 }
 function markTodaySent(){
  const arr=records.filter(r=>r.date===todayKey&&!r.sent);
  if(!arr.length){toast('今日の未送信記録はありません。');return}
- if(!confirm(`Microsoft Formsで送信済みですか？\n${arr.length}件・合計${shortMinutes(sum(arr))}を送信済みにします。`))return;
+ if(!confirm(`ChatGPTで分析済みですか？\n${arr.length}件・合計${shortMinutes(sum(arr))}を分析済みにします。`))return;
  const ids=new Set(arr.map(r=>r.id)),sentAt=Date.now();
  records=records.map(r=>ids.has(r.id)?{...r,sent:true,sentAt}:r);
  const d=new Date(sentAt);
  sendLog.unshift({date:todayKey,time:pad(d.getHours())+':'+pad(d.getMinutes()),count:arr.length,minutes:Math.round(msToMinutes(sum(arr))),owner:owner()});
- saveLog();saveRecords();toast('今日の記録を送信済みにしました。');
+ saveLog();saveRecords();toast('今日の記録を分析済みにしました。');
 }
-function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$('sendUnsentCount').textContent=`${arr.length}件`;$('sendUnsentMinutes').textContent=`合計${shortMinutes(sum(arr))}`;$('sendStatusBadge').textContent=arr.length?'未送信あり':'送信済み';$('sendStatusBadge').className=`badge ${arr.length?'badge-unsent':'badge-sent'}`;$('sendTodayBtn').disabled=!arr.length;$('markSentBtn').disabled=!arr.length;$('sendLogArea').innerHTML=sendLog.length?sendLog.slice(0,20).map(x=>`<div class="log-row"><span>${esc(x.date)} ${esc(x.time)}<br><small>${esc(x.owner)}</small></span><strong>${x.count}件 / ${x.minutes}分</strong></div>`).join(''):'<div class="empty">送信履歴はありません。</div>';$('formsLinkArea').innerHTML=settings.formsUrl?`<a class="btn btn-soft" style="text-decoration:none" href="${esc(settings.formsUrl)}" target="_blank" rel="noopener">Microsoft Formsを開く</a>`:'<span class="subtitle">設定画面でFormsの回答URLを登録してください。</span>'}
+function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$('sendUnsentCount').textContent=`${arr.length}件`;$('sendUnsentMinutes').textContent=`合計${shortMinutes(sum(arr))}`;$('sendStatusBadge').textContent=arr.length?'未送信あり':'送信済み';$('sendStatusBadge').className=`badge ${arr.length?'badge-unsent':'badge-sent'}`;$('sendTodayBtn').disabled=!arr.length;$('markSentBtn').disabled=!arr.length;$('sendLogArea').innerHTML=sendLog.length?sendLog.slice(0,20).map(x=>`<div class="log-row"><span>${esc(x.date)} ${esc(x.time)}<br><small>${esc(x.owner)}</small></span><strong>${x.count}件 / ${x.minutes}分</strong></div>`).join(''):'<div class="empty">送信履歴はありません。</div>';$('formsLinkArea').innerHTML=settings.formsUrl?`<a class="btn btn-soft" style="text-decoration:none" href="${esc(settings.formsUrl)}" target="_blank" rel="noopener">ChatGPT分析PJを開く</a>`:'<span class="subtitle">設定画面でChatGPTプロジェクトURLを登録してください。</span>'}
 function renderSettings(){$('ownerName').value=settings.owner;$('settingsOwner').value=settings.owner;$('formsUrl').value=settings.formsUrl||''}
 function renderAll(){renderTasks();renderTodaySummary();renderHistory();renderAnalysis();renderSend();renderSettings()}
 
