@@ -123,7 +123,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
             <span id="sendStatusBadge" class="badge badge-sent">送信済み</span>
           </div>
           <div class="send-actions">
-            <button id="sendTodayBtn" class="btn btn-green">営業日報をコピーしてChatGPT PJを開く</button>
+            <button id="sendTodayBtn" class="btn btn-green">Chat GPTを開く</button>
             <button id="markSentBtn" class="btn btn-primary">ChatGPT分析済みにする</button>
             <button id="exportTodayCsvBtn" class="btn btn-outline">今日のCSV（予備）</button>
             <button id="exportAllCsvBtn" class="btn btn-outline">全記録CSV</button>
@@ -142,7 +142,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}.app{
         <div class="card settings-card">
           <h3>基本設定</h3>
           <div class="field"><label for="settingsOwner">担当者名</label><input id="settingsOwner" class="text-input"></div>
-          <div class="field"><label for="formsUrl">ChatGPT プロジェクトURL</label><input id="formsUrl" class="text-input" type="url" placeholder="https://chatgpt.com/g/g-p-6a73d19e3dd4819182ff3789625edd15-ps1ye-wu-shi-jian-fen-xi/project"></div>
+          <div class="field"><label for="formsUrl">ChatGPT プロジェクトURL</label><input id="formsUrl" class="text-input" type="url" placeholder="https://chatgpt.com/g/g-p-6a73f1c8f3c08191b392e40c44e36700-ps1ye-wu-shi-jian-fen-xi/project"></div>
           <div class="setting-actions"><button id="saveSettingsBtn" class="btn btn-primary">設定を保存</button></div>
         </div>
         <div class="card settings-card">
@@ -216,7 +216,7 @@ const storedTimers=safeParse(localStorage.getItem(TIMER_KEY),[]);
 let activeTimers=Array.isArray(storedTimers)?storedTimers:(storedTimers?.task?[storedTimers]:[]);
 const DEFAULT_FORMS_URL='https://chatgpt.com/g/g-p-6a73f1c8f3c08191b392e40c44e36700-ps1ye-wu-shi-jian-fen-xi/project';
 let settings=Object.assign({owner:'',formsUrl:DEFAULT_FORMS_URL},safeParse(localStorage.getItem(SETTINGS_KEY),{}));
-if(!settings.formsUrl || /forms\.(office|cloud)\.microsoft|forms\.office\.com/i.test(settings.formsUrl))settings.formsUrl=DEFAULT_FORMS_URL;
+if(!settings.formsUrl || /forms\.(office|cloud)\.microsoft|forms\.office\.com/i.test(settings.formsUrl) || settings.formsUrl.includes('g-p-6a73d19e3dd4819182ff3789625edd15'))settings.formsUrl=DEFAULT_FORMS_URL;
 let sendLog=safeParse(localStorage.getItem(LOG_KEY),[]);
 let historyDate=todayKey,analysisPeriod='day',manualTask='';
 let ticker=null;
@@ -359,7 +359,7 @@ function markTodaySent(){
  sendLog.unshift({date:todayKey,time:pad(d.getHours())+':'+pad(d.getMinutes()),count:arr.length,minutes:Math.round(msToMinutes(sum(arr))),owner:owner()});
  saveLog();saveRecords();toast('今日の記録を分析済みにしました。');
 }
-function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$('sendUnsentCount').textContent=`${arr.length}件`;$('sendUnsentMinutes').textContent=`合計${shortMinutes(sum(arr))}`;$('sendStatusBadge').textContent=arr.length?'未送信あり':'送信済み';$('sendStatusBadge').className=`badge ${arr.length?'badge-unsent':'badge-sent'}`;$('sendTodayBtn').disabled=!arr.length;$('markSentBtn').disabled=!arr.length;$('sendLogArea').innerHTML=sendLog.length?sendLog.slice(0,20).map(x=>`<div class="log-row"><span>${esc(x.date)} ${esc(x.time)}<br><small>${esc(x.owner)}</small></span><strong>${x.count}件 / ${x.minutes}分</strong></div>`).join(''):'<div class="empty">送信履歴はありません。</div>';$('formsLinkArea').innerHTML=settings.formsUrl?`<a class="btn btn-soft" style="text-decoration:none" href="${esc(settings.formsUrl)}" target="_blank" rel="noopener">ChatGPT分析PJを開く</a>`:'<span class="subtitle">設定画面でChatGPTプロジェクトURLを登録してください。</span>'}
+function renderSend(){const arr=records.filter(r=>r.date===todayKey&&!r.sent);$('sendUnsentCount').textContent=`${arr.length}件`;$('sendUnsentMinutes').textContent=`合計${shortMinutes(sum(arr))}`;$('sendStatusBadge').textContent=arr.length?'未送信あり':'送信済み';$('sendStatusBadge').className=`badge ${arr.length?'badge-unsent':'badge-sent'}`;$('sendTodayBtn').disabled=!arr.length;$('markSentBtn').disabled=!arr.length;$('sendLogArea').innerHTML=sendLog.length?sendLog.slice(0,20).map(x=>`<div class="log-row"><span>${esc(x.date)} ${esc(x.time)}<br><small>${esc(x.owner)}</small></span><strong>${x.count}件 / ${x.minutes}分</strong></div>`).join(''):'<div class="empty">送信履歴はありません。</div>';$('formsLinkArea').innerHTML=settings.formsUrl?`<a class="btn btn-soft" style="text-decoration:none" href="${esc(settings.formsUrl)}" target="_blank" rel="noopener">Chat GPTを開く</a>`:'<span class="subtitle">設定画面でChatGPTプロジェクトURLを登録してください。</span>'}
 function renderSettings(){$('ownerName').value=settings.owner;$('settingsOwner').value=settings.owner;$('formsUrl').value=settings.formsUrl||''}
 function renderAll(){renderTasks();renderTodaySummary();renderHistory();renderAnalysis();renderSend();renderSettings()}
 
